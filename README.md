@@ -335,11 +335,12 @@ ENABLE_MOCK_LOGIN=true pnpm dev
 `.github/workflows/ci.yml`：push 后自动跑 类型检查 → 单元/集成测试 → 构建 →
 Playwright e2e → 发布 GitHub Pages。
 
-**一次性设置**：仓库 **Settings → Pages → Source = GitHub Actions**。
+**一次性设置**：无需任何手工设置。workflow 里的 `actions/configure-pages`
+带 `enablement: true`，会自动启用 Pages。
 
-> ⚠️ 若仓库名不是 `bookkeeping-app`，必须改 workflow 里的 `VITE_BASE`，
-> 否则 Pages 子路径下静态资源 404、页面白屏。
-
+> 仓库名不必等于 `bookkeeping-app`：构建的 base 路径由
+> `${{ github.event.repository.name }}` 自动推导。
+>
 > ⚠️ GitHub Pages **不允许自定义响应头**，因此 CSP 以 `<meta>` 形式注入。
 > 托管在支持响应头的环境（Nginx/CDN）时应改为响应头下发，并可补上
 > `frame-ancestors 'none'`（meta 形式下该指令会被浏览器忽略）。
