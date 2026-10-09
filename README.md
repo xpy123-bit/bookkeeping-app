@@ -335,9 +335,14 @@ ENABLE_MOCK_LOGIN=true pnpm dev
 `.github/workflows/ci.yml`：push 后自动跑 类型检查 → 单元/集成测试 → 构建 →
 Playwright e2e → 发布 GitHub Pages。
 
-**一次性设置**：无需任何手工设置。workflow 里的 `actions/configure-pages`
-带 `enablement: true`，会自动启用 Pages。
+**一次性设置（无法省略）**：仓库 **Settings → Pages → Source 选 "GitHub Actions"**，
+然后重跑一次失败的 workflow。
 
+> 这一步没法自动化：workflow 用的是自动生成的 `GITHUB_TOKEN`，而 GitHub **不允许
+> 它创建 Pages 站点** —— 加 `actions/configure-pages` 并设 `enablement: true`
+> 会以 `Resource not accessible by integration` 失败（那条路需要 PAT，比点一下更麻烦）。
+> 所以这里刻意不引入 `configure-pages`。
+>
 > 仓库名不必等于 `bookkeeping-app`：构建的 base 路径由
 > `${{ github.event.repository.name }}` 自动推导。
 >

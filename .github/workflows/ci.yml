@@ -1,5 +1,12 @@
 name: CI/CD
 
+# 前提：仓库需**一次性**在 Settings → Pages 里把 Source 设为 "GitHub Actions"。
+#
+# 这一步无法自动化：workflow 用的是自动生成的 GITHUB_TOKEN，而 GitHub 不允许
+# 它创建 Pages 站点 —— 用 actions/configure-pages 的 enablement: true 会失败，
+# 报 "Resource not accessible by integration"（需要 PAT 才行，那反而更麻烦）。
+# 因此这里不引入 configure-pages，一次点击比申请令牌省事。
+
 on:
   push:
     branches: [main, master]
@@ -57,16 +64,6 @@ jobs:
 
       - name: 端到端测试（手机模拟）
         run: pnpm run test:e2e
-
-      # 启用并读取 Pages 配置。
-      # `enablement: true` 很关键：新建仓库默认没有启用 Pages，而
-      # actions/deploy-pages 要求 Pages 已启用，否则部署步骤会直接失败。
-      # 加上这一条，首次运行就能成功，不需要先去 Settings 里手工开启。
-      - name: 配置 Pages
-        id: pages
-        uses: actions/configure-pages@v5
-        with:
-          enablement: true
 
       - name: 上传构建产物
         uses: actions/upload-pages-artifact@v3
