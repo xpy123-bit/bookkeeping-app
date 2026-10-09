@@ -5,7 +5,7 @@
   "type": "module",
   "description": "移动优先的本地优先记账 PWA：微信/支付宝账单导入、规则自动分类、预算预警与月度报表",
   "engines": {
-    "node": ">=20.19"
+    "node": ">=22.5"
   },
   "scripts": {
     "dev": "concurrently -n web,api -c cyan,magenta \"vite\" \"tsx watch server/index.ts\"",

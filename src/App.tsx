@@ -5,12 +5,14 @@
  */
 
 import { useState } from 'react';
-import { BarChart3, Import, ListOrdered, PlusCircle } from 'lucide-react';
+import { BarChart3, Import, ListOrdered, PlusCircle, UserRound } from 'lucide-react';
 import clsx from 'clsx';
 import TransactionsScreen from './ui/TransactionsScreen.tsx';
 import ImportScreen from './ui/ImportScreen.tsx';
 import StatsScreen from './ui/StatsScreen.tsx';
 import AddScreen from './ui/AddScreen.tsx';
+import AccountSheet from './ui/AccountSheet.tsx';
+import { useSession } from './auth/session.ts';
 
 /** 可用页面。 */
 type TabKey = 'transactions' | 'add' | 'import' | 'stats';
@@ -36,6 +38,10 @@ function currentMonth(): string {
 export default function App() {
   const [tab, setTab] = useState<TabKey>('transactions');
   const [month, setMonth] = useState<string>(currentMonth);
+  const [accountOpen, setAccountOpen] = useState(false);
+
+  // 登录是可选的：会话查询失败会静默降级为本地模式，不阻塞界面。
+  const session = useSession();
 
   return (
     <div className="flex min-h-dvh flex-col bg-slate-900 text-slate-200">
@@ -43,21 +49,41 @@ export default function App() {
         className="sticky top-0 z-10 border-b border-slate-800 bg-slate-900/95 backdrop-blur"
         style={{ paddingTop: 'var(--safe-top)' }}
       >
-        <div className="flex items-center justify-between px-4 py-3">
+        <div className="flex items-center justify-between gap-2 px-4 py-3">
           <h1 className="text-base font-semibold tracking-wide">记账本</h1>
-          <input
-            type="month"
-            value={month}
-            onChange={(event) => setMonth(event.target.value)}
-            aria-label="选择月份"
-            className="rounded-lg border border-slate-700 bg-slate-800 px-2 py-1 text-sm text-slate-200 outline-none focus:border-sky-500"
-          />
+          <div className="flex items-center gap-2">
+            <input
+              type="month"
+              value={month}
+              onChange={(event) => setMonth(event.target.value)}
+              aria-label="选择月份"
+              className="rounded-lg border border-slate-700 bg-slate-800 px-2 py-1 text-sm text-slate-200 outline-none focus:border-sky-500"
+            />
+            <button
+              type="button"
+              onClick={() => setAccountOpen(true)}
+              aria-label="账户"
+              className="rounded-lg border border-slate-700 bg-slate-800 p-1.5 text-slate-400 active:text-slate-200"
+            >
+              <UserRound size={16} aria-hidden />
+            </button>
+          </div>
         </div>
       </header>
 
       <main className="flex-1 overflow-y-auto px-4 pb-4 pt-3">
         {tab === 'transactions' && <TransactionsScreen month={month} />}
-        {tab === 'add' && <AddScreen onDone={() => setTab('transactions')} />}
+        {tab === 'add' && (
+          <AddScreen
+            onDone={(savedMonth) => {
+              // 补录历史账或经 OCR 填入历史发票日期时，要跳到对应月份才看得到。
+              if (savedMonth !== undefined) {
+                setMonth(savedMonth);
+              }
+              setTab('transactions');
+            }}
+          />
+        )}
         {tab === 'import' && (
           <ImportScreen
             month={month}
@@ -72,6 +98,8 @@ export default function App() {
         )}
         {tab === 'stats' && <StatsScreen month={month} />}
       </main>
+
+      {accountOpen && <AccountSheet session={session} onClose={() => setAccountOpen(false)} />}
 
       <nav
         className="sticky bottom-0 z-10 grid grid-cols-4 border-t border-slate-800 bg-slate-900/95 backdrop-blur"
