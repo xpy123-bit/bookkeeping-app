@@ -1,0 +1,49 @@
+{
+  "name": "bookkeeping-app",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "移动优先的本地优先记账 PWA：微信/支付宝账单导入、规则自动分类、预算预警与月度报表",
+  "engines": {
+    "node": ">=20.19"
+  },
+  "scripts": {
+    "dev": "concurrently -n web,api -c cyan,magenta \"vite\" \"tsx watch server/index.ts\"",
+    "dev:web": "vite",
+    "dev:api": "tsx watch server/index.ts",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview --host",
+    "start": "tsx server/index.ts",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:e2e": "playwright test",
+    "icons": "node scripts/make-icons.mjs"
+  },
+  "dependencies": {
+    "@zip.js/zip.js": "^2.7.54",
+    "clsx": "^2.1.1",
+    "dexie": "^4.0.11",
+    "dexie-react-hooks": "^1.1.7",
+    "hono": "^4.6.14",
+    "lucide-react": "^0.469.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
+  },
+  "devDependencies": {
+    "@hono/node-server": "^1.13.7",
+    "@playwright/test": "^1.49.1",
+    "@tailwindcss/vite": "^4.0.0",
+    "@types/node": "^22.10.2",
+    "@types/react": "^18.3.18",
+    "@types/react-dom": "^18.3.5",
+    "@vitejs/plugin-react": "^4.3.4",
+    "concurrently": "^9.1.2",
+    "tailwindcss": "^4.0.0",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.2",
+    "vite": "^6.0.7",
+    "vite-plugin-pwa": "^0.21.1",
+    "vitest": "^2.1.8"
+  }
+}

@@ -1,0 +1,77 @@
+name: CI/CD
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+  workflow_dispatch:
+
+# GitHub Pages 部署所需的最小权限。
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# 同一时间只跑一个部署，避免并发发布互相覆盖。
+concurrency:
+  group: pages-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    name: 类型检查 · 测试 · 构建
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: 安装 pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 11
+
+      - name: 安装 Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: 安装依赖
+        # CI 环境用官方源；本地开发用 .npmrc 里的国内镜像。
+        run: pnpm install --frozen-lockfile --registry=https://registry.npmjs.org
+
+      - name: 类型检查
+        run: pnpm run typecheck
+
+      - name: 单元测试
+        run: pnpm test
+
+      - name: 构建
+        env:
+          # 部署到 GitHub Pages 的子路径需要正确的 base，
+          # 否则静态资源会 404、页面白屏。
+          VITE_BASE: /${{ github.event.repository.name }}/
+        run: pnpm run build
+
+      - name: 安装 Playwright 浏览器
+        run: pnpm exec playwright install --with-deps chromium
+
+      - name: 端到端测试（手机模拟）
+        run: pnpm run test:e2e
+
+      - name: 上传构建产物
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+
+  deploy:
+    name: 发布到 GitHub Pages
+    needs: verify
+    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: 部署
+        id: deployment
+        uses: actions/deploy-pages@v4

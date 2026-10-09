@@ -1,0 +1,38 @@
+# 依赖
+node_modules/
+.pnpm-store/
+
+# 构建产物
+dist/
+dist-ssr/
+*.local
+dev-dist/
+
+# 环境变量：绝对不要提交真实密钥
+.env
+.env.*
+!.env.example
+
+# 本地数据库导出、账单样本（含真实交易隐私）
+*.db
+*.sqlite
+*.sqlite3
+/data/
+/samples/private/
+
+# 编辑器 / 系统
+.vscode/*
+!.vscode/extensions.json
+.idea/
+.DS_Store
+Thumbs.db
+
+# 日志
+*.log
+npm-debug.log*
+pnpm-debug.log*
+
+# 测试产物
+coverage/
+playwright-report/
+test-results/

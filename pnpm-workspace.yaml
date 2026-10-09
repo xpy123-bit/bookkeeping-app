@@ -1,0 +1,7 @@
+# pnpm 11 起，构建脚本白名单从 package.json 的 "pnpm" 字段
+# 迁移到本文件。
+#
+# esbuild 需要执行安装后脚本以放置平台二进制，否则 Vite 无法启动。
+# 本项目是单包仓库，因此不声明 `packages:`，只放设置项。
+allowBuilds:
+  esbuild: true
