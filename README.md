@@ -13,14 +13,14 @@
 | 项 | 状态 |
 | --- | --- |
 | 类型检查 | ✅ 零错误（`strict` + `noUncheckedIndexedAccess`） |
-| 单元 + 集成测试 | ✅ **106 passed / 7 files** |
+| 单元 + 集成测试 | ✅ **120 passed / 8 files** |
 | 端到端测试 | ✅ **17 passed**，Chromium 手机模拟（Pixel 5） |
 | CSP 合规验证 | ✅ 生产构建在 CSP 下 8 步全过，0 违规 0 页面错误 |
 | 生产构建 | ✅ 通过，PWA 产物已生成 |
 | 账单导入 | ✅ 微信 + 支付宝，含加密 ZIP |
+| 自动分类 | ✅ 规则引擎（离线可用）+ 大模型补充长尾商户（可选，失败自动降级） |
 | OCR / 发票识别 | ✅ 图片走 OCR，**数电发票 XML 直接解析（无需 OCR）** |
 | 登录层 | ✅ 可插拔 provider，含真实 OAuth2 授权码流程 + 演示登录 |
-| 大模型分类 | ✅ 可选增强（服务端已就绪，需 API key） |
 | 安卓沙箱指南 | ✅ `docs/ANDROID-SANDBOX.md` + 一键安装脚本 |
 
 **没有 `.env` 也能完整跑通记账、导入、OCR（XML 路径）、分类、报表。**
@@ -209,6 +209,7 @@ src/
   import/alipay.ts         支付宝解析器（含旧版拒绝）
   import/billFile.ts       文件 / ZIP / 密码 → 解析 → 自检
   categorize/rules.ts      规则引擎 + 内置中文商户词典（离线可用）
+  categorize/ai.ts         大模型补充分类（可选，失败静默降级）
   ocr/extract.ts           OCR 文本 → 字段候选（不猜测）
   ocr/invoiceXml.ts        数电发票 XML 解析（无需 OCR）
   ocr/client.ts            图片压缩（含 EXIF 摆正）+ 调用服务端
@@ -326,9 +327,6 @@ ENABLE_MOCK_LOGIN=true pnpm dev
 5. **iOS Safari 的端到端覆盖**。`playwright.config.ts` 里保留了
    `mobile-safari` 项目但已注释掉 —— 启用需同时 `playwright install webkit`
    并修改 CI 的安装步骤。iOS 是 PWA 怪癖最多的平台，值得补。
-6. **大模型分类的客户端接入**。服务端 `/api/ai/categorize` 已实现并有严格校验，
-   但客户端目前只用规则引擎。接的时候注意：**必须可失败、可降级**，
-   失败时回落到「其他支出」，不得阻塞导入。
 
 ---
 

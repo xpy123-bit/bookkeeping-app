@@ -12,6 +12,7 @@ import { AlertTriangle, CheckCircle2, FileUp, Loader2, Info } from 'lucide-react
 import { buildSelfCheckNotes, loadBillFile, isZipFile, type LoadBillOutcome } from '../import/billFile.ts';
 import { BillParseError } from '../domain/types.ts';
 import { categorizeAll } from '../categorize/rules.ts';
+import { isAiCategorizeAvailable, refineWithAi } from '../categorize/ai.ts';
 import { buildDedupeKey, db, insertTransactions, type TransactionRecord } from '../db/db.ts';
 import { formatCents } from '../domain/money.ts';
 
@@ -32,6 +33,13 @@ interface CommitOutcome {
    * 上月账单会看到「这个月还没有记录」，误以为导入失败。
    */
   latestMonth?: string;
+  /**
+   * 由大模型额外改进分类的条数。
+   *
+   * 大模型是**可选增强**：规则引擎已经把绝大多数条目分好，
+   * 这里只反映规则未命中、又被模型理清的长尾商户。
+   */
+  aiImproved?: number;
 }
 
 /**
@@ -92,9 +100,25 @@ export default function ImportScreen({ onDone }: Props) {
     try {
       const { transactions } = outcome.result;
       const rules = await db.rules.toArray();
-      const results = categorizeAll(transactions, rules);
+      let results = categorizeAll(transactions, rules);
 
       const categories = await db.categories.toArray();
+
+      // 大模型是可选增强：只处理规则未命中的长尾商户，任何失败都静默降级，
+      // 保留规则引擎的兜底分类。绝不因为模型不可用而让导入失败。
+      let aiImproved: number | undefined;
+      if (await isAiCategorizeAvailable()) {
+        const expenseCategories = categories
+          .filter((category) => category.direction === 'expense')
+          .map((category) => category.name);
+
+        const refined = await refineWithAi(transactions, results, expenseCategories);
+        results = refined.results;
+        if (refined.improvedCount > 0) {
+          aiImproved = refined.improvedCount;
+        }
+      }
+
       const idByName = new Map(categories.map((category) => [category.name, category.id]));
 
       const records: TransactionRecord[] = transactions.map((tx, i) => {
@@ -130,7 +154,7 @@ export default function ImportScreen({ onDone }: Props) {
         return latest === undefined || month > latest ? month : latest;
       }, undefined);
 
-      setCommitted({ ...result, latestMonth });
+      setCommitted({ ...result, latestMonth, ...(aiImproved !== undefined ? { aiImproved } : {}) });
       setOutcome(null);
       setFile(null);
       setPassword('');
@@ -230,6 +254,11 @@ export default function ImportScreen({ onDone }: Props) {
           {committed.latestMonth !== undefined && (
             <p className="mt-1.5 text-[11px] text-emerald-200/70">
               账单月份为 {committed.latestMonth}，将切换到该月查看。
+            </p>
+          )}
+          {committed.aiImproved !== undefined && (
+            <p className="mt-1.5 text-[11px] text-emerald-200/70">
+              其中 {committed.aiImproved} 笔由大模型补充了分类（规则未命中的长尾商户）。
             </p>
           )}
           <button
